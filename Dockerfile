@@ -1,8 +1,10 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
-RUN apk add --no-cache su-exec
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gosu wget && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY package.json ./
 RUN npm install --production
