@@ -3,7 +3,7 @@ FROM node:20-slim
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gosu wget && \
+    apt-get install -y --no-install-recommends gosu wget ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 COPY package.json ./
