@@ -6,4 +6,4 @@ if [ -d "/app/sessions" ]; then
     chown -R node:node /app/sessions
 fi
 
-exec su-exec node "$@"
+exec gosu node "$@"
