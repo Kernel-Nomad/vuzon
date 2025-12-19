@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Vuzon</title>
+  <link rel="stylesheet" href="/ui.css">
+  <style>
+    body.login-page { 
+      display: grid; 
+      place-items: center; 
+      min-height: 100vh; 
+    }
+    .login-card { 
+      background: var(--panel);
+      color: var(--ink);
+      padding: 2rem; 
+      border-radius: 16px; 
+      box-shadow: var(--shadow); 
+      border: 1px solid rgba(128, 128, 128, 0.15);
+      width: 100%; 
+      max-width: 400px; 
+    }
+    .login-form { display: grid; gap: 1rem; margin-top: 1.5rem; }
+    
+    @media (prefers-color-scheme: dark) {
+      .login-logo { filter: brightness(0.9); }
+    }
+  </style>
+</head>
+<body class="login-page">
+  <div class="login-card">
+    <div style="text-align: center;">
+      <img src="/assets/logo.png" alt="vuzon" width="64" height="64" class="login-logo" onerror="this.style.display='none'">
+      <h2>Iniciar Sesión</h2>
+    </div>
+    
+    <form id="loginForm" class="login-form">
+      <div class="alias-form__field">
+        <label for="username">Usuario</label>
+        <input type="text" id="username" name="username" class="compact-input" required autocapitalize="off">
+      </div>
+      <div class="alias-form__field">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" class="compact-input" required>
+      </div>
+      <button type="submit" class="compact-btn">Entrar</button>
+      <p id="errorMsg" class="form-error" style="text-align: center; display: none;"></p>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorMsg = document.getElementById('errorMsg');
+      const btn = e.target.querySelector('button');
+      
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+      errorMsg.style.display = 'none';
+
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+          window.location.href = '/';
+        } else {
+          throw new Error('Credenciales incorrectas');
+        }
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    });
+  </script>
+</body>
+</html>

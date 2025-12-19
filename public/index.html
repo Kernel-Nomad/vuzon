@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>vuzon</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/logo.png">
+<link rel="stylesheet" href="/ui.css">
+
+<script type="module" src="/app.js"></script>
+<script defer src="/js/alpine.js"></script>
+</head>
+<body x-data="vuzonApp" x-cloak>
+<main>
+  <div class="status-toast" :class="{ 'is-visible': statusMsg }" x-text="statusMsg" role="status"></div>
+
+<header class="titlebar">
+  <h1>
+    <img src="/assets/logo.png" class="logo" alt="vuzon" width="44" height="44"> 
+    <span class="title-text" x-text="profile.rootDomain || 'Cargando...'"></span>
+  </h1>
+  <div class="titlebar-actions">
+    <button @click="logout" type="button" class="titlebar-button" aria-label="Cerrar sesión" title="Cerrar sesión">
+      <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+      </svg>
+    </button>
+
+    <button @click="refreshAll" type="button" class="titlebar-button refresh-button" :class="{ 'loading': loading }" aria-label="Actualizar" title="Actualizar">
+      <svg class="refresh-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.023 9.348h4.992V4.356m0 0L18.2 7.17a8.25 8.25 0 0 0-14.547 4.167M7.977 14.652H2.985v4.992m0 0 2.815-2.814a8.25 8.25 0 0 0 14.546-4.167"/></svg>
+    </button>
+  </div>
+</header>
+
+<section aria-label="Crear alias">
+  <form @submit.prevent="createAlias" class="alias-form">
+    <div class="alias-form__split">
+      <div class="alias-form__column alias-form__column--inputs">
+        <div class="alias-form__row alias-form__row--local">
+          <div class="alias-form__field">
+            <label class="alias-field-label" for="localPart">Alias</label>
+            <input x-model="newAlias.local" @input="clearErrors" id="localPart" class="compact-input" placeholder="nombre.alias" autocapitalize="off" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="alias-form__action alias-form__action--gen">
+            <button @click="generateLocalPart" class="secondary compact-btn" type="button">Generar</button>
+          </div>
+        </div>
+        
+        <div class="alias-form__field">
+          <label class="alias-field-label" for="destSel">Enviar a</label>
+          <select x-model="newAlias.dest" @change="clearErrors" id="destSel" class="compact-input">
+            <option value="" disabled selected>Selecciona destino...</option>
+            <template x-for="dest in verifiedDests" :key="dest.email">
+              <option :value="dest.email" x-text="dest.email"></option>
+            </template>
+            <template x-if="dests.length > 0 && verifiedDests.length === 0">
+              <option disabled>Sin destinos verificados</option>
+            </template>
+          </select>
+        </div>
+      </div>
+
+      <div class="alias-form__footer">
+        <button class="compact-btn" type="submit" :disabled="!canCreateAlias || loading">Crear alias</button>
+        <p class="form-error" x-show="errors.alias" x-text="errors.alias"></p>
+      </div>
+
+      <div class="alias-form__divider" aria-hidden="true"></div>
+
+      <div class="alias-form__column alias-form__column--preview">
+        <div class="alias-preview">
+          <button type="button" class="alias-preview__button" :class="{ 'is-copied': copied }" :disabled="!profile.rootDomain" @click="copyPreview">
+            <span class="alias-preview__value" x-text="previewText"></span>
+          </button>
+          <p class="alias-preview__hint" x-text="copied ? '¡Copiado!' : 'Pulsa para copiar'"></p>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>
+
+<section class="dest-section">
+  <header class="section-actions">
+    <h2 class="mr-auto">Destinatarios</h2>
+    <div class="table-actions ml-auto" style="flex-wrap: nowrap;">
+        <form @submit.prevent="addDest" style="display: flex; gap: 8px; width: 100%;">
+            <input x-model="newDestInput" required type="email" class="compact-input" placeholder="nuevo@email.com" autocomplete="email" style="min-width: 200px;">
+            <button class="compact-btn" type="submit" :disabled="loading || !newDestInput">Añadir</button>
+        </form>
+    </div>
+  </header>
+  <p class="form-error" x-show="errors.dest" x-text="errors.dest" style="margin-bottom: 1rem;"></p>
+
+  <div class="rule-card-list">
+    <template x-for="dest in dests" :key="dest.id">
+        <details class="rule-card" :class="isVerified(dest) ? 'rule-card--active' : 'rule-card--inactive'">
+          <summary x-text="dest.email"></summary>
+          <div class="rule-content">
+            <div class="rule-field">
+              <span class="rule-label">Estado</span>
+              <span class="rule-status-label" :class="isVerified(dest) ? 'rule-status-label--active' : 'rule-status-label--inactive'" x-text="isVerified(dest) ? 'Verificado' : 'Pendiente (revisa tu correo)'"></span>
+            </div>
+            <div class="rule-field rule-field--actions">
+              <span class="rule-label">Acciones</span>
+              <button @click="deleteDest(dest.id)" type="button" class="secondary danger sm action-btn">Eliminar</button>
+            </div>
+          </div>
+        </details>
+    </template>
+    <div x-show="dests.length === 0" class="rule-empty">No hay destinatarios configurados.</div>
+  </div>
+</section>
+
+<section>
+  <header class="section-actions">
+    <h2 class="mr-auto">Alias existentes</h2>
+    <div class="table-actions ml-auto">
+      <input x-model="search" class="compact-input alias-search" type="search" placeholder="Buscar alias...">
+    </div>
+  </header>
+  
+  <div class="rule-card-list">
+    <template x-for="rule in filteredRules" :key="rule.id">
+      <details class="rule-card" :class="rule.enabled ? 'rule-card--active' : 'rule-card--inactive'">
+        <summary x-text="rule.name"></summary>
+        <div class="rule-content">
+          <div class="rule-field">
+             <span class="rule-label">Estado</span>
+             <span class="rule-status-label" :class="rule.enabled ? 'rule-status-label--active' : 'rule-status-label--inactive'" x-text="rule.enabled ? 'Activo' : 'Pausado'"></span>
+          </div>
+          <div class="rule-field">
+             <span class="rule-label">Destino</span>
+             <span x-text="getRuleDest(rule)"></span>
+          </div>
+          <div class="rule-field rule-field--actions">
+             <span class="rule-label">Acciones</span>
+             <button @click="toggleRule(rule)" class="secondary sm action-btn" x-text="rule.enabled ? 'Pausar' : 'Activar'"></button>
+             <button @click="deleteRule(rule.id)" class="secondary danger sm action-btn">Eliminar</button>
+          </div>
+        </div>
+      </details>
+    </template>
+    <div x-show="filteredRules.length === 0" class="rule-empty">
+      <span x-text="rules.length === 0 ? 'No hay alias creados.' : 'No se encontraron alias.'"></span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="app-footer">
+  <div class="footer-container">
+    
+    <div class="footer-info">
+      <p>&copy; <span x-text="new Date().getFullYear()"></span> <span class="footer-brand">KN</span></p>
+    </div>
+
+    <div class="footer-socials">
+      
+      <a href="https://ko-fi.com/F2F81PNZRL" target="_blank" rel="noopener noreferrer" class="kofi-btn" title="Tip me">
+        <img src="https://storage.ko-fi.com/cdn/cup-border.png" alt="Ko-fi" class="kofi-img">
+        <span>Tip me</span>
+      </a>
+
+      <div class="github-btn-wrapper">
+        <iframe 
+          src="https://ghbtns.com/github-btn.html?user=Kernel-Nomad&repo=vuzon&type=star&count=true&size=large" 
+          frameborder="0" 
+          scrolling="0" 
+          width="140" 
+          height="30" 
+          title="GitHub Stars">
+        </iframe>
+      </div>
+
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
