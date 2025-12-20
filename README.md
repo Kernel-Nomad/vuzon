@@ -77,15 +77,18 @@ Create a `.env` file in the project root:
 - **Zone → Email Routing DNS: Edit** (only if you plan to enable Email Routing via API)
 
 ```env
-# Cloudflare Email Routing
-CF_API_TOKEN=
-DOMAIN=
+# Token with edit permissions for Email Routing in your zone and account
+CF_API_TOKEN=your_cloudflare_api_token
+DOMAIN=yourdomain.com
 
-AUTH_USER=
-AUTH_PASS=
+# Credentials to access the vuzon panel
+AUTH_USER=admin
+AUTH_PASS=your_secure_password
 
-BASE_URL=[https://vuzon.mydomain.com](https://vuzon.mydomain.com)
+# Public URL (optional, just for reference)
+BASE_URL=https://vuzon.yourdomain.com
 
+# Port where the service will be exposed
 VUZON_PORT=8001
 
 ```
@@ -206,15 +209,18 @@ Crea un `.env` en la raíz del proyecto:
 * **Zone → Email Routing DNS: Edit** (solo si vas a activar Email Routing por API)
 
 ```env
-# Cloudflare Email Routing
-CF_API_TOKEN=
-DOMAIN=
+# Token con permisos de edición para Email Routing en tu zona y cuenta
+CF_API_TOKEN=tu_token_api_de_cloudflare
+DOMAIN=tudominio.com
 
-AUTH_USER=
-AUTH_PASS=
+# Credenciales para acceder al panel de vuzon
+AUTH_USER=admin
+AUTH_PASS=tu_contraseña_segura
 
-BASE_URL=[https://vuzon.midominio.com](https://vuzon.midominio.com)
+# URL pública (opcional, para referencia)
+BASE_URL=https://vuzon.tudominio.com
 
+# Puerto donde se expondrá el servicio
 VUZON_PORT=8001
 
 ```
