@@ -91,6 +91,9 @@ BASE_URL=https://vuzon.yourdomain.com
 # Port where the service will be exposed
 VUZON_PORT=8001
 
+# Cookies secret
+SESSION_SECRET=your_secure_secret
+
 ```
 
 ---
@@ -222,6 +225,9 @@ BASE_URL=https://vuzon.tudominio.com
 
 # Puerto donde se expondrá el servicio
 VUZON_PORT=8001
+
+# Secreto cookies
+SESSION_SECRET=tu_secreto_seguro
 
 ```
 
