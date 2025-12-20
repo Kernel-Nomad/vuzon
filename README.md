@@ -99,7 +99,8 @@ VUZON_PORT=8001
 ```yaml
 services:
   vuzon:
-    image: ghcr.io/Kernel-Nomad/vuzon
+    container_name: vuzon
+    image: ghcr.io/kernel-nomad/vuzon
     env_file:
       - .env
     restart: unless-stopped
@@ -227,7 +228,8 @@ VUZON_PORT=8001
 ```yaml
 services:
   vuzon:
-    image: ghcr.io/Kernel-Nomad/vuzon
+    container_name: vuzon
+    image: ghcr.io/kernel-nomad/vuzon
     env_file:
       - .env
     restart: unless-stopped
