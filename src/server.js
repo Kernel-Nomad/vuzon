@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import compression from 'compression';
 import session from 'express-session';
 import FileStoreFactory from 'session-file-store';
 import fs from 'fs';
@@ -41,6 +42,7 @@ if (!sessionSecret) {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(compression());
 
 app.use(session({
   store: new FileStore({
@@ -92,7 +94,10 @@ app.post('/api/logout', (req, res) => {
   });
 });
 
-app.use(express.static('public', { index: false }));
+app.use(express.static('public', { 
+  index: false,
+  maxAge: '1d' // Cache estático por 1 día
+}));
 
 const addressSchema = z.object({
   email: z.string().email("Formato de correo inválido")
