@@ -1,0 +1,24 @@
+{
+  "name": "vuzon",
+  "version": "1.2.0",
+  "type": "module",
+  "scripts": {
+    "build": "npm run setup && npm run build:client",
+    "build:client": "node scripts/build-client.js",
+    "check": "npm run build && npm run check:syntax && npm test",
+    "check:syntax": "find src public tests scripts -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "start": "npm run build && node src/server.js",
+    "setup": "node scripts/download-alpine.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "session-file-store": "^1.5.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.4"
+  }
+}

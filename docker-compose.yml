@@ -1,0 +1,14 @@
+services:
+  vuzon:
+    container_name: vuzon
+    image: ghcr.io/kernel-nomad/vuzon
+    env_file:
+      - .env
+    environment:
+      # VUZON_PORT solo aplica al mapeo del host (ports), no al puerto interno.
+      PORT: "8001"
+    restart: unless-stopped
+    ports:
+      - "${VUZON_PORT:-8001}:8001"
+    volumes:
+      - ./sessions:/app/sessions
