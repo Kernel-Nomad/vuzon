@@ -1,0 +1,6 @@
+# Desarrollo: construir la imagen desde el repositorio en lugar de usar GHCR.
+# Uso: docker compose -f docker-compose.yml -f docker-compose.build.yml up --build -d
+services:
+  vuzon:
+    build: .
+    image: vuzon-local

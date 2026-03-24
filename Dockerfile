@@ -31,7 +31,7 @@ RUN chown -R node:node /app
 ENV PORT=8001
 EXPOSE 8001
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=25s --retries=3 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:' + process.env.PORT + '/healthz').then((res) => { if (!res.ok) process.exit(1); }).catch(() => process.exit(1))"]
 
 RUN chmod +x scripts/entrypoint.sh

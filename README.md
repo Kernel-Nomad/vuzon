@@ -48,6 +48,23 @@ Lightweight UI that uses the **Cloudflare Email Routing API** to create and mana
 
 > What is Email Routing: https://developers.cloudflare.com/email-routing/
 
+**Primary audience:** run vuzon with **Docker Compose** and the published image — you only need [`docker-compose.yml`](docker-compose.yml) and a `.env` file. **Cloning the repo is optional** (mainly for development).
+
+### Recommended install
+
+```bash
+mkdir vuzon && cd vuzon
+export VUZON_RELEASE=v1.0.0   # pick a tag from [Releases](https://github.com/Kernel-Nomad/vuzon/releases)
+curl -fsSL -o docker-compose.yml "https://raw.githubusercontent.com/Kernel-Nomad/vuzon/${VUZON_RELEASE}/docker-compose.yml"
+curl -fsSL -o .env.example "https://raw.githubusercontent.com/Kernel-Nomad/vuzon/${VUZON_RELEASE}/.env.example"
+cp .env.example .env
+# Edit .env: CF_API_TOKEN, DOMAIN, AUTH_PASS (optional: VUZON_PORT on the host)
+docker compose pull && docker compose up -d
+# Open http://localhost:8001 or http://localhost:$VUZON_PORT
+```
+
+You can also download `docker-compose.yml` and `.env.example` from the **assets** on each stable GitHub Release. More detail (pinning the image, troubleshooting, cloning): [Deployment with Docker Compose](#deployment-with-docker-compose).
+
 ---
 
 ## Features
@@ -85,17 +102,22 @@ DOMAIN=yourdomain.com
 CF_ZONE_ID=your_cloudflare_zone_id
 CF_ACCOUNT_ID=your_cloudflare_account_id
 
-# Credentials to access the vuzon panel
+# Panel login (required; never leave AUTH_PASS empty or whitespace-only — startup will fail)
 AUTH_USER=admin
 AUTH_PASS=your_secure_password
+
+# Optional: trusted proxy hops for req.ip (e.g. rate limiting behind nginx). Default: 1 when NODE_ENV=production, otherwise off.
+# TRUST_PROXY=1
 
 # Public URL (optional, just for reference)
 BASE_URL=https://vuzon.yourdomain.com
 
-# Port where the service will be exposed
+# Host port with Docker Compose (optional; default 8001). The Compose file sets PORT=8001 inside the container.
 VUZON_PORT=8001
+# Local `npm start` only: PORT overrides VUZON_PORT for the listen port.
+# PORT=8001
 
-# Session secret (optional; if omitted, .session_secret is generated locally)
+# Session secret (optional; if omitted, persisted as ./sessions/.session_secret, else legacy ./.session_secret at repo root)
 SESSION_SECRET=your_secure_secret
 ```
 
@@ -103,28 +125,28 @@ SESSION_SECRET=your_secure_secret
 
 ## Deployment with Docker Compose
 
-> Tip: the repository includes a `.dockerignore` file that excludes dependencies, logs, and environment files, reducing the build context for lighter images and faster builds.
+The bundled [`docker-compose.yml`](docker-compose.yml) pulls **`ghcr.io/kernel-nomad/vuzon:latest`**, updated on each stable GitHub Release. Follow **[Recommended install](#recommended-install)** above to fetch `docker-compose.yml` and `.env.example` without cloning.
+
+If the container exits or the panel does not start: **`docker compose logs -f vuzon`**.
+
+**Pin the image to match your release files:** if you downloaded compose/env from Git tag `v1.2.3`, set the service image to the same semver published on GHCR (usually **without** the leading `v`), for example:
 
 ```yaml
-services:
-  vuzon:
-    container_name: vuzon
-    image: ghcr.io/kernel-nomad/vuzon
-    env_file:
-      - .env
-    restart: unless-stopped
-    ports:
-      - "${VUZON_PORT:-8001}:8001"
-    volumes:
-      - ./sessions:/app/sessions
+image: ghcr.io/kernel-nomad/vuzon:1.2.3
 ```
 
-**Run:**
+That way the running image matches the `docker-compose.yml` and `.env.example` you fetched for that release.
 
-```bash
-docker compose up -d
-# Open http://localhost:8001
-```
+**If you cloned the repository**, place `.env` in the project root and run `docker compose pull && docker compose up -d` the same way. To **build the image locally** instead of pulling from GHCR:
+
+`docker compose -f docker-compose.yml -f docker-compose.build.yml up --build -d` — see [`docker-compose.build.yml`](docker-compose.build.yml).
+
+**Compose details:**
+
+- **`PORT=8001` inside the container** is set in Compose; **`VUZON_PORT`** in `.env` only changes the **host** side of `ports`. You do not need `PORT` in `.env` for this setup.
+- **`env_file: .env`**: create `.env` from `.env.example` before `docker compose up`.
+
+> The repository includes `.dockerignore` for faster local builds; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -163,9 +185,19 @@ npm run check
 - `public/`: static source files (`pages/`, `styles/`, `assets/`, `vendor/`, `site.webmanifest`) used as build input, not served directly.
 - `public/vendor/alpine.js`: vendored asset produced by `npm run setup`; it is copied to `/js/alpine.js` during the build and is not versioned.
 - `dist/public/`: generated frontend artifacts and the only directory served by Express at runtime.
-- `src/shared/`: reserved for truly shared modules; it intentionally stays empty except for a placeholder `.gitkeep` until a real cross-layer use case exists.
-- `tests/unit/`, `tests/integration/`, `tests/architecture/`, `tests/scripts/`: official test taxonomy.
-- `docs/architecture/repository-structure.md`: overview of the canonical repository organization.
+- `src/shared/`: small cross-layer modules (for example Zod schemas consumed by both `config/` and `features/`). Keep it focused; avoid using it as a general dumping ground.
+- `tests/unit/` and `tests/integration/`: primary automated coverage.
+- `tests/architecture/` and `tests/scripts/`: lightweight smoke checks (expected repository layout, `node --check` on build scripts).
+
+### Deployment notes
+
+- **Sessions** are stored on disk (`session-file-store`, default `./sessions`). Mount a persistent volume in Docker (see Compose) so logins survive restarts. The auto-generated session secret file lives at **`./sessions/.session_secret`** by default (legacy **`./.session_secret`** at the repo root is still read if present).
+- **Multiple replicas** (e.g. several pods behind a load balancer) do **not** share session files unless you use sticky sessions or a shared session store. A single replica, or sticky sessions to the same instance, avoids unexpected logouts.
+- **Production logs** do not print `AUTH_USER`; only whether panel credentials are configured.
+- **Login brute-force mitigation**: after repeated failed logins per IP, the API returns `429` with `Retry-After`. Tune with `LOGIN_RATE_LIMIT_MAX` (default `30`, use `0` to disable), `LOGIN_RATE_LIMIT_WINDOW_MS` (default 15 minutes), and `LOGIN_RATE_LIMIT_MAX_BUCKETS` (default `10000`) to cap in-memory entries per distinct IP.
+- **`TRUST_PROXY`**: trusted proxy hop count for Express (`req.ip`, used for login rate limiting). Default is `1` when `NODE_ENV=production`, otherwise disabled. Set `TRUST_PROXY=1` (or `2`, etc.) if TLS terminates on nginx/Traefik while `NODE_ENV` is not `production`.
+- **JSON request bodies** for API routes are limited to **256kb**.
+- **`CF_ZONE_ID` / `CF_ACCOUNT_ID`**: after autodetection or manual configuration, both must be non-empty and match Cloudflare-style identifiers (startup fails otherwise).
 
 ---
 
@@ -207,7 +239,7 @@ The generated public surface is:
 The backend exposes login/session endpoints plus a REST proxy to Cloudflare. Cloudflare-facing routes and `GET /api/me` require an authenticated session.
 
 - `GET  /healthz` - Public healthcheck that returns `{ ok: true }`.
-- `POST /api/login` - Authenticates with `{ username, password }`.
+- `POST /api/login` - Authenticates with `{ username, password }`. Too many failed attempts from one IP returns `429` with `Retry-After` (see deployment notes for env vars).
 - `POST /api/logout` - Closes the current session.
 - `GET  /api/me` - Returns `{ email, rootDomain }` for the authenticated user.
 - `GET  /api/addresses` - Lists destination addresses.
@@ -236,6 +268,7 @@ Unauthenticated requests to `/api/*` return `401 { error: "No autorizado" }` and
 ## Security
 
 - Use **API Tokens** with **minimal privileges** instead of the Global API Key.
+- Set a strong **`AUTH_PASS`**; empty or whitespace-only values are rejected at startup.
 - Place the app behind a reverse proxy with **TLS** and, if applicable, add **authentication**.
 
 ---
@@ -247,6 +280,23 @@ Unauthenticated requests to `/api/*` return `401 { error: "No autorizado" }` and
 UI ligera que usa la **API de Cloudflare Email Routing** para crear y gestionar **alias** y **destinatarios** de forma sencilla.
 
 > Que es Email Routing: https://developers.cloudflare.com/email-routing/
+
+**Audiencia principal:** ejecutar vuzon con **Docker Compose** y la imagen publicada — solo necesitas [`docker-compose.yml`](docker-compose.yml) y un `.env`. **Clonar el repositorio es opcional** (sobre todo para desarrollo).
+
+### Instalacion recomendada
+
+```bash
+mkdir vuzon && cd vuzon
+export VUZON_RELEASE=v1.0.0   # elige un tag en [Releases](https://github.com/Kernel-Nomad/vuzon/releases)
+curl -fsSL -o docker-compose.yml "https://raw.githubusercontent.com/Kernel-Nomad/vuzon/${VUZON_RELEASE}/docker-compose.yml"
+curl -fsSL -o .env.example "https://raw.githubusercontent.com/Kernel-Nomad/vuzon/${VUZON_RELEASE}/.env.example"
+cp .env.example .env
+# Edita .env: CF_API_TOKEN, DOMAIN, AUTH_PASS (opcional: VUZON_PORT en el host)
+docker compose pull && docker compose up -d
+# Abre http://localhost:8001 o http://localhost:$VUZON_PORT
+```
+
+Tambien puedes descargar `docker-compose.yml` y `.env.example` desde los **assets** de cada release estable en GitHub. Mas detalle (fijar imagen, averias, clonar): [Despliegue con Docker Compose](#despliegue-con-docker-compose).
 
 ---
 
@@ -286,17 +336,22 @@ DOMAIN=tudominio.com
 CF_ZONE_ID=tu_zone_id_de_cloudflare
 CF_ACCOUNT_ID=tu_account_id_de_cloudflare
 
-# Credenciales para acceder al panel de vuzon
+# Credenciales del panel (obligatorias; no dejes AUTH_PASS vacío ni solo espacios — el arranque fallará)
 AUTH_USER=admin
 AUTH_PASS=tu_contraseña_segura
+
+# Opcional: saltos de proxy de confianza para req.ip (p. ej. rate limit tras nginx). Por defecto: 1 si NODE_ENV=production, si no desactivado.
+# TRUST_PROXY=1
 
 # URL publica (opcional, para referencia)
 BASE_URL=https://vuzon.tudominio.com
 
-# Puerto donde se expondrá el servicio
+# Puerto en el host con Docker Compose (opcional; por defecto 8001). El compose fija PORT=8001 dentro del contenedor.
 VUZON_PORT=8001
+# Solo ejecucion local con `npm start`: PORT tiene prioridad sobre VUZON_PORT.
+# PORT=8001
 
-# Secreto de sesion (opcional; si falta, se genera .session_secret localmente)
+# Secreto de sesion (opcional; si falta, ./sessions/.session_secret; legado: ./.session_secret en la raiz)
 SESSION_SECRET=tu_secreto_seguro
 ```
 
@@ -304,28 +359,28 @@ SESSION_SECRET=tu_secreto_seguro
 
 ## Despliegue con Docker Compose
 
-> Consejo: el repositorio incluye un `.dockerignore` que excluye dependencias, logs y archivos de entorno, reduciendo el contexto de build y logrando imagenes mas ligeras y compilaciones mas rapidas.
+El [`docker-compose.yml`](docker-compose.yml) del repo usa **`ghcr.io/kernel-nomad/vuzon:latest`**, actualizado en cada release estable de GitHub. Sigue **[Instalacion recomendada](#instalacion-recomendada)** arriba para obtener `docker-compose.yml` y `.env.example` sin clonar.
+
+Si el contenedor sale o el panel no arranca: **`docker compose logs -f vuzon`**.
+
+**Fija la imagen al mismo release que tus ficheros:** si descargaste compose/env del tag `v1.2.3`, pon en el servicio la misma version semver publicada en GHCR (normalmente **sin** la `v` inicial), por ejemplo:
 
 ```yaml
-services:
-  vuzon:
-    container_name: vuzon
-    image: ghcr.io/kernel-nomad/vuzon
-    env_file:
-      - .env
-    restart: unless-stopped
-    ports:
-      - "${VUZON_PORT:-8001}:8001"
-    volumes:
-      - ./sessions:/app/sessions
+image: ghcr.io/kernel-nomad/vuzon:1.2.3
 ```
 
-**Levantar:**
+Asi la imagen en ejecucion coincide con el `docker-compose.yml` y el `.env.example` de ese release.
 
-```bash
-docker compose up -d
-# Abre http://localhost:8001
-```
+**Si clonaste el repositorio**, deja `.env` en la raiz del proyecto y ejecuta `docker compose pull && docker compose up -d` igual. Para **construir la imagen en local** en lugar de GHCR:
+
+`docker compose -f docker-compose.yml -f docker-compose.build.yml up --build -d` — ver [`docker-compose.build.yml`](docker-compose.build.yml).
+
+**Detalles del compose:**
+
+- **`PORT=8001` dentro del contenedor** lo fija el compose; **`VUZON_PORT`** en `.env` solo afecta el **host** en `ports`. No hace falta definir `PORT` en `.env` para este despliegue.
+- **`env_file: .env`**: crea `.env` a partir de `.env.example` antes de `docker compose up`.
+
+> El repo incluye `.dockerignore` para builds locales rapidos; mas en [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -364,9 +419,19 @@ npm run check
 - `public/`: fuentes estaticas (`pages/`, `styles/`, `assets/`, `vendor/`, `site.webmanifest`) usadas como input del build; no se sirven directamente.
 - `public/vendor/alpine.js`: asset vendorizado por `npm run setup`; el build lo publica como `/js/alpine.js` y no se versiona.
 - `dist/public/`: artefactos generados del frontend y unico directorio servido por Express en runtime.
-- `src/shared/`: reservado para modulos realmente compartidos; permanece vacio salvo por un `.gitkeep` hasta que exista una necesidad real entre capas.
-- `tests/unit/`, `tests/integration/`, `tests/architecture/`, `tests/scripts/`: taxonomia oficial de pruebas.
-- `docs/architecture/repository-structure.md`: resumen de la organizacion canonica del repositorio.
+- `src/shared/`: modulos pequeños compartidos entre capas (por ejemplo esquemas Zod usados por `config/` y `features/`). Mantenerlo acotado; no usarlo como cajon de sastre.
+- `tests/unit/` y `tests/integration/`: cobertura principal automatizada.
+- `tests/architecture/` y `tests/scripts/`: comprobaciones ligeras (layout del repo, `node --check` sobre scripts de build).
+
+### Notas de despliegue
+
+- Las **sesiones** se guardan en disco (`session-file-store`, por defecto `./sessions`). En Docker monta un volumen persistente (ver Compose) para que el login sobreviva a reinicios. El secreto de sesion autogenerado queda en **`./sessions/.session_secret`** por defecto (sigue leyendose **`./.session_secret`** en la raiz si existia).
+- **Varias réplicas** (varios pods tras un balanceador) **no** comparten ficheros de sesión salvo que uses sticky sessions o un almacén de sesión compartido. Una sola réplica, o afinidad al mismo nodo, evita cierres de sesión inesperados.
+- En **producción** los logs **no** imprimen `AUTH_USER`; solo si las credenciales del panel están configuradas.
+- **Mitigación de fuerza bruta en login**: tras fallos repetidos por IP, la API responde `429` con `Retry-After`. Ajusta con `LOGIN_RATE_LIMIT_MAX` (por defecto `30`, `0` desactiva), `LOGIN_RATE_LIMIT_WINDOW_MS` (por defecto 15 minutos) y `LOGIN_RATE_LIMIT_MAX_BUCKETS` (por defecto `10000`) para acotar entradas en memoria por IP distinta.
+- **`TRUST_PROXY`**: número de saltos de proxy de confianza de Express (`req.ip`, usado en el rate limit de login). Por defecto es `1` con `NODE_ENV=production`, si no está desactivado. Usa `TRUST_PROXY=1` (o `2`, etc.) si el TLS termina en nginx/Traefik y `NODE_ENV` no es `production`.
+- **Cuerpos JSON** de la API limitados a **256kb**.
+- **`CF_ZONE_ID` / `CF_ACCOUNT_ID`**: tras autodetección o configuración manual, ambos deben ser no vacíos y con formato de identificador Cloudflare (si no, el arranque falla).
 
 ---
 
@@ -408,7 +473,7 @@ La superficie publica generada es:
 El backend expone endpoints de login/sesion y un proxy REST hacia Cloudflare. Las rutas que hablan con Cloudflare y `GET /api/me` requieren sesion autenticada.
 
 - `GET  /healthz` - Healthcheck publico que devuelve `{ ok: true }`.
-- `POST /api/login` - Autentica con `{ username, password }`.
+- `POST /api/login` - Autentica con `{ username, password }`. Demasiados fallos desde una IP devuelve `429` con `Retry-After` (variables en notas de despliegue).
 - `POST /api/logout` - Cierra la sesion actual.
 - `GET  /api/me` - Devuelve `{ email, rootDomain }` para el usuario autenticado.
 - `GET  /api/addresses` - Lista destinatarios.
@@ -437,4 +502,5 @@ Las peticiones no autenticadas a `/api/*` devuelven `401 { error: "No autorizado
 ## Seguridad
 
 - Usa **API Tokens** con **privilegios minimos** en lugar de la Global API Key.
+- Define un **`AUTH_PASS`** fuerte; valores vacíos o solo espacios se rechazan en el arranque.
 - Ubica la app tras un reverse proxy con **TLS** y, si procede, añade **autenticacion**.

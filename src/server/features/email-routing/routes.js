@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { getPanelDomain } from '../../config/domain-env.js';
+import { getPanelAuthCredentials } from '../../config/panel-auth-env.js';
 import { CloudflareApiError } from '../../platform/cloudflare/client.js';
-import { addressSchema, ruleSchema } from './validation.js';
+import { addressSchema, cloudflareResourceIdSchema, ruleSchema } from './validation.js';
 import { formatZodError } from './format-zod-error.js';
 
 function resolveRouteError(err) {
@@ -18,9 +20,10 @@ function resolveRouteError(err) {
     };
   }
 
+  console.error('Error en ruta API de email routing:', err);
   return {
     status: 500,
-    message: err?.message || 'Error interno del servidor',
+    message: 'Error interno del servidor',
   };
 }
 
@@ -52,9 +55,10 @@ export function registerApiRoutes(app, {
   const { fetchCloudflare, fetchAllCloudflare } = cloudflareClient;
   const updateRuleEnabledState = async (req, res, enabled) => {
     try {
-      const rule = await fetchCloudflare(`/zones/${env.CF_ZONE_ID}/email/routing/rules/${req.params.id}`);
+      const ruleId = cloudflareResourceIdSchema.parse(req.params.id);
+      const rule = await fetchCloudflare(`/zones/${env.CF_ZONE_ID}/email/routing/rules/${ruleId}`);
       const payload = buildRuleUpdatePayload(rule, enabled);
-      const apiRes = await fetchCloudflare(`/zones/${env.CF_ZONE_ID}/email/routing/rules/${req.params.id}`, 'PUT', payload);
+      const apiRes = await fetchCloudflare(`/zones/${env.CF_ZONE_ID}/email/routing/rules/${ruleId}`, 'PUT', payload);
 
       res.json({ result: apiRes });
     } catch (err) {
@@ -63,9 +67,10 @@ export function registerApiRoutes(app, {
   };
 
   app.get('/api/me', requireAuth, (req, res) => {
+    const { authUser } = getPanelAuthCredentials(env);
     res.json({
-      email: env.AUTH_USER || 'admin',
-      rootDomain: env.DOMAIN,
+      email: authUser || 'admin',
+      rootDomain: getPanelDomain(env),
     });
   });
 
@@ -99,7 +104,8 @@ export function registerApiRoutes(app, {
 
   app.delete('/api/addresses/:id', requireAuth, async (req, res) => {
     try {
-      await fetchCloudflare(`/accounts/${env.CF_ACCOUNT_ID}/email/routing/addresses/${req.params.id}`, 'DELETE');
+      const addressId = cloudflareResourceIdSchema.parse(req.params.id);
+      await fetchCloudflare(`/accounts/${env.CF_ACCOUNT_ID}/email/routing/addresses/${addressId}`, 'DELETE');
       res.json({ success: true });
     } catch (err) {
       sendRouteError(res, err);
@@ -118,7 +124,7 @@ export function registerApiRoutes(app, {
   app.post('/api/rules', requireAuth, async (req, res) => {
     try {
       const { localPart, destEmail } = ruleSchema.parse(req.body);
-      const aliasEmail = `${localPart}@${env.DOMAIN}`;
+      const aliasEmail = `${localPart}@${getPanelDomain(env)}`;
       const payload = {
         name: aliasEmail,
         enabled: true,
@@ -139,7 +145,8 @@ export function registerApiRoutes(app, {
 
   app.delete('/api/rules/:id', requireAuth, async (req, res) => {
     try {
-      await fetchCloudflare(`/zones/${env.CF_ZONE_ID}/email/routing/rules/${req.params.id}`, 'DELETE');
+      const ruleId = cloudflareResourceIdSchema.parse(req.params.id);
+      await fetchCloudflare(`/zones/${env.CF_ZONE_ID}/email/routing/rules/${ruleId}`, 'DELETE');
       res.json({ success: true });
     } catch (err) {
       sendRouteError(res, err);

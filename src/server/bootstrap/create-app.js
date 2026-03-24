@@ -13,22 +13,22 @@ import { registerApiRoutes } from '../features/email-routing/routes.js';
 import { registerPageRoutes } from '../features/pages/routes.js';
 import { createCloudflareClient } from '../platform/cloudflare/client.js';
 
+const JSON_BODY_LIMIT = '256kb';
+
 export function createApp({
   env = process.env,
   cloudflareClient = createCloudflareClient({ env }),
-  sessionSecret = resolveSessionSecret({ env }),
   sessionStorePath = './sessions',
+  sessionSecret = resolveSessionSecret({ env, sessionStorePath }),
   publicDir = path.resolve('dist/public'),
 } = {}) {
   const runtime = getServerRuntime(env);
   const app = express();
 
-  if (runtime.isProduction) {
-    app.set('trust proxy', 1);
-  }
+  app.set('trust proxy', runtime.trustProxy);
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ limit: JSON_BODY_LIMIT }));
+  app.use(express.urlencoded({ extended: true, limit: JSON_BODY_LIMIT }));
   app.use(createSessionMiddleware({
     sessionSecret,
     isProduction: runtime.isProduction,

@@ -1,8 +1,12 @@
+import { getPanelAuthCredentials } from '../../config/panel-auth-env.js';
+
 export function createRequireAuth({ env = process.env } = {}) {
   return function requireAuth(req, res, next) {
     const isApiRequest = req.path === '/api' || req.path.startsWith('/api/');
 
-    if (!env.AUTH_USER || !env.AUTH_PASS) {
+    const { authUser, authPass } = getPanelAuthCredentials(env);
+
+    if (!authUser || !authPass) {
       return res.status(500).json({ error: 'Credenciales de servidor no configuradas (AUTH_USER/AUTH_PASS)' });
     }
 

@@ -1,11 +1,13 @@
+# vuzon — necesitas un .env en este directorio (plantilla: .env.example del repo o del release).
+# Sesiones en ./sessions (volumen persistente). Documentación: README del repositorio.
+# https://github.com/Kernel-Nomad/vuzon
 services:
   vuzon:
     container_name: vuzon
-    image: ghcr.io/kernel-nomad/vuzon
-    env_file:
-      - .env
+    image: ghcr.io/kernel-nomad/vuzon:latest
+    env_file: .env
     environment:
-      # VUZON_PORT solo aplica al mapeo del host (ports), no al puerto interno.
+      # Puerto dentro del contenedor (fijo). En el host usa VUZON_PORT en .env con el mapeo ports abajo.
       PORT: "8001"
     restart: unless-stopped
     ports:

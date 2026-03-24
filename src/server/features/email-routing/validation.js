@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { cloudflareResourceIdSchema } from '../../../shared/cloudflare-schemas.js';
+
+export { cloudflareResourceIdSchema };
 
 export const addressSchema = z.object({
   email: z.string().email('Formato de correo inválido'),
