@@ -92,7 +92,7 @@ By contributing, you agree your contributions are distributed under the same lic
 
 The bundled [`docker-compose.yml`](docker-compose.yml) pulls **`ghcr.io/kernel-nomad/vuzon:latest`**, updated on stable GitHub Releases. Place `.env` in the project root and run `docker compose pull && docker compose up -d` like end users.
 
-**Pin the image to match release files:** if you downloaded `docker-compose.yml` and `.env.example` from a given Git tag, set the service `image` to the **same semver** published on GHCR for that release (registry tags usually **omit** the leading `v` from the Git tag). That keeps the running image aligned with the compose and env template you fetched.
+**Pin the image to match release files:** if you downloaded `docker-compose.yml` and `env.example` from a given Git tag (release assets; same template as `.env.example` in the repo), set the service `image` to the **same semver** published on GHCR for that release (registry tags usually **omit** the leading `v` from the Git tag). That keeps the running image aligned with the compose and env template you fetched.
 
 **Build locally instead of pulling:** merge with [`docker-compose.build.yml`](docker-compose.build.yml):
 

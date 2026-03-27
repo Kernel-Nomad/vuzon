@@ -7,7 +7,18 @@ import { CloudflareApiError } from '../../../src/server/platform/cloudflare/clie
 function createMockCloudflareClient() {
   return {
     async fetchCloudflare(requestPath, method = 'GET', body = null) {
-      const isRuleItem = /\/email\/routing\/rules\/[^/]+$/.test(requestPath);
+      if (requestPath.endsWith('/email/routing/rules/catch_all') && method === 'GET') {
+        return {
+          id: 'catch_all_rule',
+          name: 'Catch-all',
+          enabled: true,
+          matchers: [{ type: 'all' }],
+          actions: [{ type: 'forward', value: ['catchall@example.com'] }],
+        };
+      }
+
+      const isRuleItem = /\/email\/routing\/rules\/[^/]+$/.test(requestPath)
+        && !requestPath.endsWith('/email/routing/rules/catch_all');
 
       if (isRuleItem && method === 'GET') {
         return {
@@ -162,6 +173,17 @@ test('integración HTTP: healthz, auth, API con Cloudflare simulado', async () =
       const data = await readJson(res);
       assert.ok(Array.isArray(data.result));
       assert.equal(data.result[0].id, 'rule1');
+    }
+
+    {
+      const res = await fetch(`${baseUrl}/api/rules/catch-all`, {
+        headers: { Cookie: sessionCookie },
+      });
+      assert.equal(res.status, 200);
+      const data = await readJson(res);
+      assert.equal(data.result.id, 'catch_all_rule');
+      assert.ok(Array.isArray(data.result.actions));
+      assert.equal(data.result.actions[0].type, 'forward');
     }
 
     {

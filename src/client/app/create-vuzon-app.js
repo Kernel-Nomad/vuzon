@@ -11,11 +11,23 @@ function getVerifiedDests(state) {
   return state.dests.filter((dest) => isVerifiedStatus(dest.verified));
 }
 
+/** Regla catch-all de Email Routing (listada aparte en la API dedicada). */
+function ruleMatchesCatchAllSlot(rule, catchAll) {
+  if (!catchAll) {
+    return false;
+  }
+  if (catchAll.id && rule.id === catchAll.id) {
+    return true;
+  }
+  return Array.isArray(rule.matchers) && rule.matchers.some((m) => m && m.type === 'all');
+}
+
 export function createVuzonApp() {
   return {
     profile: { rootDomain: '' },
     rules: [],
     dests: [],
+    catchAll: null,
     loading: false,
 
     search: '',
@@ -35,13 +47,32 @@ export function createVuzonApp() {
 
     get filteredRules() {
       const validRules = this.rules.filter((rule) => rule.name && rule.name.trim() !== '');
+      const withoutCatchAllDup = this.catchAll
+        ? validRules.filter((rule) => !ruleMatchesCatchAllSlot(rule, this.catchAll))
+        : validRules;
 
       if (!this.search) {
-        return validRules;
+        return withoutCatchAllDup;
       }
 
       const query = this.search.toLowerCase();
-      return validRules.filter((rule) => rule.name.toLowerCase().includes(query));
+      return withoutCatchAllDup.filter((rule) => rule.name.toLowerCase().includes(query));
+    },
+
+    get aliasListEmptyMessage() {
+      if (this.filteredRules.length > 0) {
+        return '';
+      }
+      if (this.search) {
+        return 'No se encontraron alias.';
+      }
+      if (this.catchAll) {
+        return 'No hay alias personalizados; solo aplica el catch-all.';
+      }
+      if (this.rules.length === 0) {
+        return 'No hay alias creados.';
+      }
+      return 'No se encontraron alias.';
     },
 
     get normalizedLocalPart() {

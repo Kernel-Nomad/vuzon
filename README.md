@@ -4,7 +4,9 @@
 
 <div align="center">
 
-[English](#english) | [Español](#spanish)
+<h3>
+  <a href="#english">English</a> | <a href="#español">Español</a>
+</h3>
 
 </div>
 
@@ -50,22 +52,19 @@
 
 ## Installation
 
-### Homelab (Docker Compose)
+### Docker Compose
 
-Use **Docker Compose v2.24+** so `.env` can be optional at compose-parse time; the app still requires a configured `.env` (or equivalent env) to stay running.
-
-**Quick install** (from [latest release](https://github.com/Kernel-Nomad/vuzon/releases/latest) assets — no clone):
+**Quick install** (files from the [`main`](https://github.com/Kernel-Nomad/vuzon/tree/main) branch):
 
 ```bash
 mkdir vuzon && cd vuzon
-curl -fsSL -O https://github.com/Kernel-Nomad/vuzon/releases/latest/download/docker-compose.yml \
-  -O https://github.com/Kernel-Nomad/vuzon/releases/latest/download/.env.example
+curl -fsSL -O https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/docker-compose.yml \
+  -O https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/.env.example
 cp .env.example .env
-# Edit .env: CF_API_TOKEN, DOMAIN, AUTH_USER, AUTH_PASS (see Requirements). Recommended: SESSION_SECRET (e.g. openssl rand -hex 32).
 docker compose pull && docker compose up -d
 ```
 
-**Manual:** put [`docker-compose.yml`](docker-compose.yml) and [`.env.example`](.env.example) in the same directory (e.g. from a [release](https://github.com/Kernel-Nomad/vuzon/releases)), run **`cp .env.example .env`**, edit **`.env`**, then **`docker compose pull && docker compose up -d`**.
+**Manual:** put [`docker-compose.yml`](docker-compose.yml) and [`.env.example`](.env.example) in the same directory (from the repo, e.g. [raw `docker-compose.yml`](https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/docker-compose.yml) and [raw `.env.example`](https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/.env.example)), run **`cp .env.example .env`**, edit **`.env`**, then **`docker compose pull && docker compose up -d`**.
 
 Open **http://localhost:8001** (or `http://<server-ip>:<port>` on your LAN). Another host port: **`VUZON_PORT`** in `.env`.
 
@@ -77,7 +76,7 @@ Login uses a signed **`vuzon_session`** cookie only (nothing on disk). For local
 
 ## Requirements
 
-- **Docker** and **Docker Compose** (**v2.24+** recommended for the bundled `docker-compose.yml` optional `env_file`).
+- **Docker** and **Docker Compose**
 - A **Cloudflare** zone (domain) with **Email Routing** enabled for that zone.
 - A Cloudflare **API token** with the permissions below (see **[Cloudflare API token](#cloudflare-api-token)**). Official guide: [Create API tokens](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/).
 
@@ -153,105 +152,102 @@ Clone the repo, run tests, and build without Docker: **[CONTRIBUTING.md](CONTRIB
 
 # vuzon
 
-**vuzon** es un panel web ligero para gestionar **alias y reglas** de [Cloudflare Email Routing](https://developers.cloudflare.com/email-routing/) y las **direcciones de destino** asociadas. Está pensado para **uso personal** con tu cuenta de Cloudflare, en **homelab o red privada**; no está orientado a despliegues públicos tipo SaaS.
+**vuzon** es un panel web ligero para gestionar **alias y reglas** de [Cloudflare Email Routing](https://developers.cloudflare.com/email-routing/) y **direcciones de destino**. Está pensado para **uso personal** con tu cuenta de Cloudflare en **homelab o red privada**, no como despliegue público multiinquilino ni como despliegue SaaS de "producción".
 
 ---
 
 ## Instalación
 
-### Homelab (Docker Compose)
+### Docker Compose
 
-Usa **Docker Compose v2.24+** para que `.env` sea opcional al parsear Compose; la app sigue necesitando variables configuradas para quedarse en marcha.
-
-**Instalación rápida** (assets de la [última release](https://github.com/Kernel-Nomad/vuzon/releases/latest), sin clonar):
+**Instalación rápida** (archivos desde la rama [`main`](https://github.com/Kernel-Nomad/vuzon/tree/main)):
 
 ```bash
 mkdir vuzon && cd vuzon
-curl -fsSL -O https://github.com/Kernel-Nomad/vuzon/releases/latest/download/docker-compose.yml \
-  -O https://github.com/Kernel-Nomad/vuzon/releases/latest/download/.env.example
+curl -fsSL -O https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/docker-compose.yml \
+  -O https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/.env.example
 cp .env.example .env
-# Edita .env: CF_API_TOKEN, DOMAIN, AUTH_USER, AUTH_PASS (ver Requisitos). Recomendado: SESSION_SECRET (p. ej. openssl rand -hex 32).
 docker compose pull && docker compose up -d
 ```
 
-**Manual:** coloca [`docker-compose.yml`](docker-compose.yml) y [`.env.example`](.env.example) en el mismo directorio, **`cp .env.example .env`**, edita **`.env`** y **`docker compose pull && docker compose up -d`**.
+**Manual:** coloca [`docker-compose.yml`](docker-compose.yml) y [`.env.example`](.env.example) en el mismo directorio (desde el repo, p. ej. [`docker-compose.yml` en raw](https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/docker-compose.yml) y [`.env.example` en raw](https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/.env.example)), ejecuta **`cp .env.example .env`**, edita **`.env`**, y luego **`docker compose pull && docker compose up -d`**.
 
-Abre **http://localhost:8001** (o `http://<IP>:<puerto>` en tu LAN). Otro puerto en el anfitrión: **`VUZON_PORT`** en `.env`.
+Abre **http://localhost:8001** (o `http://<server-ip>:<port>` en tu LAN). Otro puerto del anfitrión: **`VUZON_PORT`** en `.env`.
 
-Si falla: **`docker compose logs -f vuzon`**.
+Problemas: **`docker compose logs -f vuzon`**.
 
-El login usa solo la cookie firmada **`vuzon_session`**. Build local de imagen, pinning y rutas HTTP: **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+El inicio de sesión usa solo una cookie firmada **`vuzon_session`** (nada en disco). Para build local de imagen, pinning y detalles HTTP, ver **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
 ---
 
 ## Requisitos
 
-- **Docker** y **Docker Compose** (**v2.24+** recomendado para el `docker-compose.yml` incluido y `env_file` opcional).
-- Una zona (dominio) en **Cloudflare** con **Email Routing** activado para esa zona.
-- Un **token de API** de Cloudflare con los permisos indicados abajo (ver **[Token de API de Cloudflare](#token-de-api-de-cloudflare)**). Guía oficial: [Crear tokens de API](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/).
+- **Docker** y **Docker Compose**
+- Una **zona** (dominio) en **Cloudflare** con **Email Routing** habilitado para esa zona.
+- Un **token de API** de Cloudflare con los permisos siguientes (ver **[Token de API de Cloudflare](#token-de-api-de-cloudflare)**). Guía oficial: [Crear tokens de API](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/).
 
 ### Token de API de Cloudflare
 
-1. Entra en el panel de Cloudflare → **Mi perfil** (avatar, arriba a la derecha) → **[API Tokens](https://dash.cloudflare.com/profile/api-tokens)**.
-2. **Create Token** → **Create Custom Token** (la interfaz suele estar en inglés).
-3. En **Permissions**, añade estas filas (nombres como en el panel en inglés):
+1. Abre el panel de Cloudflare → **My Profile** (avatar, arriba a la derecha) → **[API Tokens](https://dash.cloudflare.com/profile/api-tokens)**.
+2. Pulsa **Create Token** → **Create Custom Token**.
+3. En **Permissions**, añade estas filas (los nombres coinciden con la interfaz en inglés de Cloudflare):
 
-   | Ámbito | Permiso | Para qué lo usa vuzon |
-   |--------|---------|------------------------|
+   | Ámbito | Permiso | Para qué lo necesita vuzon |
+   |--------|---------|----------------------------|
    | **Account** → **Email Routing Addresses** | **Edit** | Listar, añadir y quitar direcciones de destino (`/accounts/.../email/routing/addresses`). |
-   | **Zone** → **Email Routing Rules** | **Edit** | Listar, crear, actualizar, activar/desactivar y borrar reglas (`/zones/.../email/routing/rules`). |
-   | **Zone** → **Zone** | **Read** | Al arrancar, resolver **`CF_ZONE_ID`** y **`CF_ACCOUNT_ID`** a partir de **`DOMAIN`** con `GET /zones?name=...`. Omite esta fila solo si defines ambos IDs a mano en `.env`. |
+   | **Zone** → **Email Routing Rules** | **Edit** | Listar, crear, actualizar, habilitar/deshabilitar y borrar reglas de enrutamiento (`/zones/.../email/routing/rules`). |
+   | **Zone** → **Zone** | **Read** | Al arrancar, resolver **`CF_ZONE_ID`** y **`CF_ACCOUNT_ID`** a partir de **`DOMAIN`** mediante `GET /zones?name=...`. Omite esta fila solo si defines ambos IDs manualmente en `.env`. |
 
-4. En **Account Resources**, elige la cuenta donde está el dominio (o **All accounts** si aceptas un alcance mayor).
-5. En **Zone Resources**, limita a **Specific zone** → tu dominio (recomendado), o **All zones** de esa cuenta.
-6. Crea el token y copia el valor en **`CF_API_TOKEN`** del `.env` (Cloudflare solo lo muestra **una vez**).
+4. En **Account Resources**, elige la cuenta propietaria de la zona (o **All accounts** si aceptas un acceso más amplio).
+5. En **Zone Resources**, restringe a **Specific zone** → tu dominio (recomendado), o **All zones** de esa cuenta.
+6. Crea el token y copia el valor en **`CF_API_TOKEN`** de `.env` (Cloudflare lo muestra **una sola vez**).
 
-Usa un **token de API**, no la **Global API Key**. Prioriza **mínimo privilegio** (una zona, una cuenta) frente a “todas las zonas” cuando puedas.
+Usa un **token de API**, no la **Global API Key**. Prioriza **el menor privilegio posible** (una zona, una cuenta) frente a «todas las zonas» cuando puedas.
 
 ---
 
 ## Variables de entorno
 
-Si existe **`.env`** junto a `docker-compose.yml`, Compose lo inyecta en el contenedor (`env_file` con `required: false` en Compose **v2.24+**). Sin un **`.env`** rellenado, el contenedor puede arrancar pero el proceso sale hasta que estén **`CF_API_TOKEN`**, **`DOMAIN`**, **`AUTH_USER`** y **`AUTH_PASS`**.
+Si existe **`.env`** junto a `docker-compose.yml`, Compose lo pasa al contenedor (`env_file` con `required: false` en Compose **v2.24+**). Sin un **`.env`** rellenado, el contenedor puede arrancar pero el proceso termina hasta que estén definidos **`CF_API_TOKEN`**, **`DOMAIN`**, **`AUTH_USER`** y **`AUTH_PASS`**.
 
 ### Referencia rápida
 
-Mínimo: **`CF_API_TOKEN`**, **`DOMAIN`**, **`AUTH_USER`**, **`AUTH_PASS`**. **`VUZON_PORT`** cambia el puerto del **anfitrión** (por defecto **8001**); dentro del contenedor Compose fija **`PORT=8001`** — con Docker normalmente no pongas **`PORT`** en `.env`.
+Mínimo: **`CF_API_TOKEN`**, **`DOMAIN`**, **`AUTH_USER`**, **`AUTH_PASS`**. **`VUZON_PORT`** cambia el puerto del **anfitrión** (por defecto **8001**); dentro del contenedor Compose define **`PORT=8001`** — en Docker sueles omitir **`PORT`** en `.env`.
 
-| Variable | Para qué sirve |
-|----------|----------------|
-| **`CF_API_TOKEN`** | Token de Cloudflare (Email Routing; ver **Requisitos**). |
-| **`DOMAIN`** | Apex de la zona en Cloudflare; resuelve zona/cuenta si no hay IDs. |
-| **`AUTH_USER`** / **`AUTH_PASS`** | Login del panel (la contraseña no puede estar vacía). |
-| **`VUZON_PORT`** | Puerto TCP del anfitrión (por defecto **8001**). |
-| **`SESSION_SECRET`** | Firma **`vuzon_session`**. **Recomendado:** valor aleatorio estable; si falta, un secreto nuevo en cada arranque y **las sesiones se invalidan al reiniciar**. |
+| Variable | Propósito |
+|----------|-----------|
+| **`CF_API_TOKEN`** | Token de API de Cloudflare (Email Routing; ver **Requisitos**). |
+| **`DOMAIN`** | Apex de la zona en Cloudflare; sirve para resolver zona/cuenta si no hay IDs. |
+| **`AUTH_USER`** / **`AUTH_PASS`** | Inicio de sesión en el panel (la contraseña no puede estar vacía). |
+| **`VUZON_PORT`** | Puerto TCP del anfitrión asignado a la app (por defecto **8001**). |
+| **`SESSION_SECRET`** | Firma **`vuzon_session`**. **Recomendado:** un valor aleatorio estable; si falta, se genera un secreto nuevo en cada arranque y **las sesiones se reinician al reiniciar**. |
 
-**Si falla la autodetección desde `DOMAIN`:** define **`CF_ZONE_ID`** y **`CF_ACCOUNT_ID`** en `.env`.
+**Si la autodetección a partir de `DOMAIN` falla:** define **`CF_ZONE_ID`** y **`CF_ACCOUNT_ID`** en `.env`.
 
-**Detrás de un proxy inverso (nginx, Traefik, …):** **`TRUST_PROXY=1`** (o `2`, …). **Por defecto desactivado.**
+**Detrás de un proxy inverso (nginx, Traefik, etc.):** define **`TRUST_PROXY=1`** (o `2`, …) para que Express confíe en `X-Forwarded-*` y vea la IP real del cliente. **Desactivado por defecto.**
 
-**`npm start` en local:** **`PORT`** tiene prioridad sobre **`VUZON_PORT`**. **`NODE_ENV=production`** activa cookies de sesión **`secure`** (úsalas con HTTPS).
+**`npm start` en local:** **`PORT`** tiene prioridad sobre **`VUZON_PORT`** para el puerto de escucha. **`NODE_ENV=production`** habilita cookies de sesión **`secure`** (úsalo con HTTPS).
 
-Más variables orientadas a desarrollo (`VUZON_PUBLIC_DIR`, **`BASE_URL`** solo documentación): **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+Otras variables orientadas a desarrollo (`VUZON_PUBLIC_DIR`, **`BASE_URL`** solo a efectos de documentación): **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
 ---
 
 ## Uso básico
 
-1. Activa **Email Routing** en la zona (panel de Cloudflare).
-2. Añade una **dirección de destino** (llegará un correo de verificación).
-3. Entra en vuzon, inicia sesión y crea un **alias (regla)** con una parte local en minúsculas y un destino **ya verificado**.
+1. **Habilita Email Routing** en la zona (panel de Cloudflare).
+2. Añade una **dirección de destino** (se envía un correo de verificación).
+3. Inicia sesión en vuzon y crea un **alias (regla)** con una parte local en minúsculas y un destino **verificado**.
 
 ---
 
 ## Seguridad
 
-- Usa **tokens de API** con **privilegios mínimos**, no la Global API Key.
-- **`AUTH_PASS`** fuerte.
-- Si el panel es accesible desde Internet, **TLS** detrás de un proxy inverso y buenas prácticas de red.
+- Prioriza **tokens de API** con **el menor privilegio posible**, no la Global API Key.
+- Usa una **`AUTH_PASS`** fuerte.
+- Si el panel es accesible desde internet, usa **TLS** (proxy inverso) y buenas prácticas de red.
 
 ---
 
 ## Desarrollo
 
-Clonar el repositorio, tests y ejecución sin Docker: **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+Clona el repositorio, ejecuta tests y haz build sin Docker: **[CONTRIBUTING.md](CONTRIBUTING.md)**.

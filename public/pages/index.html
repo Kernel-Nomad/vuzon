@@ -120,6 +120,25 @@
   </header>
   
   <div class="rule-card-list">
+    <template x-if="catchAll">
+      <details class="rule-card rule-card--catchall" :class="catchAll.enabled ? 'rule-card--active' : 'rule-card--inactive'">
+        <summary>Catch-all</summary>
+        <div class="rule-content">
+          <div class="rule-field">
+            <span class="rule-label">Ámbito</span>
+            <span>Correo no cubierto por otro alias</span>
+          </div>
+          <div class="rule-field">
+            <span class="rule-label">Estado</span>
+            <span class="rule-status-label" :class="catchAll.enabled ? 'rule-status-label--active' : 'rule-status-label--inactive'" x-text="catchAll.enabled ? 'Activo' : 'Pausado'"></span>
+          </div>
+          <div class="rule-field">
+            <span class="rule-label">Destino</span>
+            <span x-text="getRuleDest(catchAll)"></span>
+          </div>
+        </div>
+      </details>
+    </template>
     <template x-for="rule in filteredRules" :key="rule.id">
       <details class="rule-card" :class="rule.enabled ? 'rule-card--active' : 'rule-card--inactive'">
         <summary x-text="rule.name"></summary>
@@ -141,7 +160,7 @@
       </details>
     </template>
     <div x-show="filteredRules.length === 0" class="rule-empty">
-      <span x-text="rules.length === 0 ? 'No hay alias creados.' : 'No se encontraron alias.'"></span>
+      <span x-text="aliasListEmptyMessage"></span>
     </div>
   </div>
 </section>

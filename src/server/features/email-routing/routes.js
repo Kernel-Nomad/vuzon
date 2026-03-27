@@ -72,6 +72,11 @@ export function registerApiRoutes(app, {
     res.json({ result: rules });
   }));
 
+  app.get('/api/rules/catch-all', requireAuth, asyncHandler(async (req, res) => {
+    const catchAll = await fetchCloudflare(`/zones/${env.CF_ZONE_ID}/email/routing/rules/catch_all`);
+    res.json({ result: catchAll });
+  }));
+
   app.post('/api/rules', requireAuth, asyncHandler(async (req, res) => {
     const { localPart, destEmail } = ruleSchema.parse(req.body);
     const aliasEmail = `${localPart}@${getPanelDomain(env)}`;

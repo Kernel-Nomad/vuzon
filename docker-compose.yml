@@ -1,8 +1,7 @@
-# https://github.com/Kernel-Nomad/vuzon
 services:
   vuzon:
     container_name: vuzon
-    image: ghcr.io/kernel-nomad/vuzon:latest
+    image: ghcr.io/kernel-nomad/vuzon
     env_file:
       - .env
     environment:

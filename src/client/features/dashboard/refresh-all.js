@@ -4,6 +4,7 @@ const REFRESH_ENDPOINTS = [
   { path: '/api/me', label: 'perfil' },
   { path: '/api/rules', label: 'reglas' },
   { path: '/api/addresses', label: 'destinatarios' },
+  { path: '/api/rules/catch-all', label: 'catch-all' },
 ];
 
 export async function refreshAll(state, { apiRequest, setStatus }) {
@@ -22,6 +23,9 @@ export async function refreshAll(state, { apiRequest, setStatus }) {
     results.forEach((result, i) => {
       const { path, label } = REFRESH_ENDPOINTS[i];
       if (result.status !== 'fulfilled') {
+        if (path === '/api/rules/catch-all') {
+          state.catchAll = null;
+        }
         const msg = result.reason?.message || String(result.reason);
         failures.push(`${label}: ${msg}`);
         return;
@@ -34,6 +38,8 @@ export async function refreshAll(state, { apiRequest, setStatus }) {
         state.rules = data?.result || [];
       } else if (path === '/api/addresses') {
         state.dests = data?.result || [];
+      } else if (path === '/api/rules/catch-all') {
+        state.catchAll = data?.result ?? null;
       }
     });
 
@@ -42,6 +48,8 @@ export async function refreshAll(state, { apiRequest, setStatus }) {
 
     if (failures.length > 0) {
       setStatus(state, `Carga parcial: ${failures.join(' · ')}`);
+    } else {
+      setStatus(state, '');
     }
   } catch (err) {
     console.error('Error cargando datos:', err);
@@ -49,6 +57,7 @@ export async function refreshAll(state, { apiRequest, setStatus }) {
     state.profile = state.profile || { rootDomain: '' };
     state.rules = state.rules || [];
     state.dests = state.dests || [];
+    state.catchAll = state.catchAll ?? null;
   } finally {
     state._refreshDepth = Math.max(0, (state._refreshDepth || 1) - 1);
     if (state._refreshDepth === 0) {

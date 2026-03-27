@@ -74,7 +74,36 @@ export function generateLocalPart(state, { clearErrors }) {
   clearErrors(state);
 }
 
+function formatActionDestination(action) {
+  if (!action || typeof action.type !== 'string') {
+    return '';
+  }
+
+  const { type } = action;
+  const raw = action.value;
+  const parts = Array.isArray(raw)
+    ? raw.map((v) => (v == null ? '' : String(v))).filter(Boolean)
+    : raw != null && raw !== ''
+      ? [String(raw)]
+      : [];
+
+  if (type === 'forward') {
+    return parts.length > 0 ? parts.join(', ') : '';
+  }
+  if (type === 'worker') {
+    return parts.length > 0 ? `Worker: ${parts.join(', ')}` : 'Email Worker';
+  }
+  if (type === 'drop') {
+    return 'Descartar';
+  }
+  return parts.length > 0 ? parts.join(', ') : '';
+}
+
 export function getRuleDest(rule) {
-  const destinations = rule.actions?.[0]?.value || [];
-  return Array.isArray(destinations) ? destinations.join(', ') : destinations;
+  const actions = rule?.actions;
+  if (!Array.isArray(actions) || actions.length === 0) {
+    return '';
+  }
+  const chunks = actions.map(formatActionDestination).filter(Boolean);
+  return chunks.length > 0 ? chunks.join(' · ') : '';
 }
