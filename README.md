@@ -79,7 +79,25 @@ Login uses a signed **`vuzon_session`** cookie only (nothing on disk). For local
 
 - **Docker** and **Docker Compose** (**v2.24+** recommended for the bundled `docker-compose.yml` optional `env_file`).
 - A **Cloudflare** zone (domain) with **Email Routing** enabled for that zone.
-- A Cloudflare **API token** used by vuzon to call Email Routing. **Suggested scopes:** **Account → Email Routing Addresses: Read & Edit** and **Zone → Email Routing Rules: Read & Edit**. Create tokens in the [Cloudflare dashboard](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/).
+- A Cloudflare **API token** with the permissions below (see **[Cloudflare API token](#cloudflare-api-token)**). Official guide: [Create API tokens](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/).
+
+### Cloudflare API token
+
+1. Open the Cloudflare dashboard → **My Profile** (avatar, top right) → **[API Tokens](https://dash.cloudflare.com/profile/api-tokens)**.
+2. Click **Create Token** → **Create Custom Token**.
+3. Under **Permissions**, add these rows (names match the English Cloudflare UI):
+
+   | Scope | Permission | Why vuzon needs it |
+   |-------|------------|-------------------|
+   | **Account** → **Email Routing Addresses** | **Edit** | List, add, and remove destination addresses (`/accounts/.../email/routing/addresses`). |
+   | **Zone** → **Email Routing Rules** | **Edit** | List, create, update, enable/disable, and delete routing rules (`/zones/.../email/routing/rules`). |
+   | **Zone** → **Zone** | **Read** | On startup, resolve **`CF_ZONE_ID`** and **`CF_ACCOUNT_ID`** from **`DOMAIN`** via `GET /zones?name=...`. Skip this row only if you set both IDs manually in `.env`. |
+
+4. Under **Account Resources**, choose the account that owns the zone (or **All accounts** if you accept broader access).
+5. Under **Zone Resources**, restrict to **Specific zone** → your domain (recommended), or **All zones** for that account.
+6. Create the token and copy the value into **`CF_API_TOKEN`** in `.env` (Cloudflare shows it **once**).
+
+Use an **API token**, not the **Global API Key**. Prefer **least privilege** (one zone, one account) over “all zones” when possible.
 
 ---
 
@@ -170,7 +188,25 @@ El login usa solo la cookie firmada **`vuzon_session`**. Build local de imagen, 
 
 - **Docker** y **Docker Compose** (**v2.24+** recomendado para el `docker-compose.yml` incluido y `env_file` opcional).
 - Una zona (dominio) en **Cloudflare** con **Email Routing** activado para esa zona.
-- Un **token de API** de Cloudflare con permisos mínimos para Email Routing. **Scopes recomendados:** **Account → Email Routing Addresses: Read & Edit** y **Zone → Email Routing Rules: Read & Edit**. Creación de tokens: [documentación de Cloudflare](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/).
+- Un **token de API** de Cloudflare con los permisos indicados abajo (ver **[Token de API de Cloudflare](#token-de-api-de-cloudflare)**). Guía oficial: [Crear tokens de API](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/).
+
+### Token de API de Cloudflare
+
+1. Entra en el panel de Cloudflare → **Mi perfil** (avatar, arriba a la derecha) → **[API Tokens](https://dash.cloudflare.com/profile/api-tokens)**.
+2. **Create Token** → **Create Custom Token** (la interfaz suele estar en inglés).
+3. En **Permissions**, añade estas filas (nombres como en el panel en inglés):
+
+   | Ámbito | Permiso | Para qué lo usa vuzon |
+   |--------|---------|------------------------|
+   | **Account** → **Email Routing Addresses** | **Edit** | Listar, añadir y quitar direcciones de destino (`/accounts/.../email/routing/addresses`). |
+   | **Zone** → **Email Routing Rules** | **Edit** | Listar, crear, actualizar, activar/desactivar y borrar reglas (`/zones/.../email/routing/rules`). |
+   | **Zone** → **Zone** | **Read** | Al arrancar, resolver **`CF_ZONE_ID`** y **`CF_ACCOUNT_ID`** a partir de **`DOMAIN`** con `GET /zones?name=...`. Omite esta fila solo si defines ambos IDs a mano en `.env`. |
+
+4. En **Account Resources**, elige la cuenta donde está el dominio (o **All accounts** si aceptas un alcance mayor).
+5. En **Zone Resources**, limita a **Specific zone** → tu dominio (recomendado), o **All zones** de esa cuenta.
+6. Crea el token y copia el valor en **`CF_API_TOKEN`** del `.env` (Cloudflare solo lo muestra **una vez**).
+
+Usa un **token de API**, no la **Global API Key**. Prioriza **mínimo privilegio** (una zona, una cuenta) frente a “todas las zonas” cuando puedas.
 
 ---
 
