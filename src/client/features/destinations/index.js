@@ -33,7 +33,7 @@ export async function deleteDest(state, id, { apiRequest, refreshAll, setStatus 
     setStatus(state, 'Destinatario eliminado');
     await refreshAll();
   } catch (err) {
-    setStatus(state, err.message);
+    setStatus(state, `Error: ${err.message}`);
   } finally {
     state.loading = false;
   }

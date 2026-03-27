@@ -2,24 +2,28 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getListenPort, getServerRuntime, parseTrustProxy } from '../../src/server/config/runtime.js';
 
-test('parseTrustProxy: por defecto producción 1, desarrollo false', () => {
-  assert.equal(parseTrustProxy(undefined, { isProduction: true }), 1);
-  assert.equal(parseTrustProxy('', { isProduction: true }), 1);
-  assert.equal(parseTrustProxy(undefined, { isProduction: false }), false);
+test('parseTrustProxy: sin valor → false', () => {
+  assert.equal(parseTrustProxy(undefined), false);
+  assert.equal(parseTrustProxy(''), false);
 });
 
 test('parseTrustProxy: false explícito', () => {
-  assert.equal(parseTrustProxy('false', { isProduction: true }), false);
-  assert.equal(parseTrustProxy('0', { isProduction: true }), false);
+  assert.equal(parseTrustProxy('false'), false);
+  assert.equal(parseTrustProxy('0'), false);
+});
+
+test('parseTrustProxy: true / 1 → un salto', () => {
+  assert.equal(parseTrustProxy('true'), 1);
+  assert.equal(parseTrustProxy('1'), 1);
 });
 
 test('parseTrustProxy: número de saltos', () => {
-  assert.equal(parseTrustProxy('2', { isProduction: false }), 2);
+  assert.equal(parseTrustProxy('2'), 2);
 });
 
 test('getServerRuntime incluye trustProxy', () => {
   const r = getServerRuntime({ NODE_ENV: 'production', PORT: '3000' });
-  assert.equal(r.trustProxy, 1);
+  assert.equal(r.trustProxy, false);
   const r2 = getServerRuntime({ NODE_ENV: 'development', TRUST_PROXY: '1' });
   assert.equal(r2.trustProxy, 1);
 });

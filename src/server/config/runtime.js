@@ -1,11 +1,10 @@
 /**
  * @param {string | undefined} raw
- * @param {{ isProduction: boolean }} opts
  * @returns {boolean | number}
  */
-export function parseTrustProxy(raw, { isProduction }) {
+export function parseTrustProxy(raw) {
   if (raw === undefined || raw === '') {
-    return isProduction ? 1 : false;
+    return false;
   }
 
   const s = String(raw).trim().toLowerCase();
@@ -21,7 +20,7 @@ export function parseTrustProxy(raw, { isProduction }) {
     return n === 0 ? false : n;
   }
 
-  return isProduction ? 1 : false;
+  return false;
 }
 
 /**
@@ -55,6 +54,6 @@ export function getServerRuntime(env = process.env) {
   return {
     port: getListenPort(env),
     isProduction,
-    trustProxy: parseTrustProxy(env.TRUST_PROXY, { isProduction }),
+    trustProxy: parseTrustProxy(env.TRUST_PROXY),
   };
 }

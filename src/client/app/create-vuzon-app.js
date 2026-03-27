@@ -26,6 +26,7 @@ export function createVuzonApp() {
     statusMsg: '',
     errors: { alias: '', dest: '' },
     copied: false,
+    copiedTimer: null,
     statusTimer: null,
 
     get verifiedDests() {
@@ -59,7 +60,9 @@ export function createVuzonApp() {
     },
 
     init() {
-      this.refreshAll();
+      this._api = this.api.bind(this);
+      this._refreshAll = this.refreshAll.bind(this);
+      this._refreshAll();
     },
 
     async api(path, method = 'GET', body = null) {
@@ -68,53 +71,53 @@ export function createVuzonApp() {
 
     async refreshAll() {
       return refreshAll(this, {
-        apiRequest: this.api.bind(this),
+        apiRequest: this._api,
         setStatus,
       });
     },
 
     async logout() {
-      return logout({ apiRequest: this.api.bind(this) });
+      return logout({ apiRequest: this._api });
     },
 
     async createAlias() {
       return createAlias(this, {
-        apiRequest: this.api.bind(this),
+        apiRequest: this._api,
         clearErrors,
-        refreshAll: this.refreshAll.bind(this),
+        refreshAll: this._refreshAll,
         setStatus,
       });
     },
 
     async addDest() {
       return addDest(this, {
-        apiRequest: this.api.bind(this),
+        apiRequest: this._api,
         clearErrors,
-        refreshAll: this.refreshAll.bind(this),
+        refreshAll: this._refreshAll,
         setStatus,
       });
     },
 
     async toggleRule(rule) {
       return toggleRule(this, rule, {
-        apiRequest: this.api.bind(this),
-        refreshAll: this.refreshAll.bind(this),
+        apiRequest: this._api,
+        refreshAll: this._refreshAll,
         setStatus,
       });
     },
 
     async deleteRule(id) {
       return deleteRule(this, id, {
-        apiRequest: this.api.bind(this),
-        refreshAll: this.refreshAll.bind(this),
+        apiRequest: this._api,
+        refreshAll: this._refreshAll,
         setStatus,
       });
     },
 
     async deleteDest(id) {
       return deleteDest(this, id, {
-        apiRequest: this.api.bind(this),
-        refreshAll: this.refreshAll.bind(this),
+        apiRequest: this._api,
+        refreshAll: this._refreshAll,
         setStatus,
       });
     },

@@ -8,13 +8,23 @@ export function getPanelDomain(env = process.env) {
 }
 
 /**
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string | null} Mensaje de error o null si la configuración es válida.
+ */
+export function getDomainConfigurationIssue(env = process.env) {
+  if (!getPanelDomain(env)) {
+    return 'DOMAIN es obligatorio en .env y no puede estar vacío (ni solo espacios). Debe ser el dominio raíz en Cloudflare (ej. ejemplo.com).';
+  }
+  return null;
+}
+
+/**
  * DOMAIN obligatorio para construir alias y exponer el dominio raíz en la API.
  * @param {NodeJS.ProcessEnv} [env]
  */
 export function assertDomainConfigured(env = process.env) {
-  if (!getPanelDomain(env)) {
-    throw new Error(
-      'DOMAIN es obligatorio y no puede estar vacío (ni solo espacios).',
-    );
+  const issue = getDomainConfigurationIssue(env);
+  if (issue) {
+    throw new Error(issue);
   }
 }

@@ -1,54 +1,25 @@
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'node:path';
-
-const LEGACY_SECRET_FILE = '.session_secret';
-
-function secretFileInStore(sessionStorePath) {
-  return path.join(sessionStorePath, '.session_secret');
-}
 
 /**
- * Resuelve el secreto de sesión: env, archivo junto al store, luego legado en cwd.
- * @param {{ env?: NodeJS.ProcessEnv, sessionStorePath?: string }} [opts]
+ * Secreto para firmar la cookie de sesión.
+ * Origen: SESSION_SECRET en el entorno. Si falta, se genera uno efímero al arrancar
+ * (las sesiones dejan de ser válidas al reiniciar el proceso).
+ *
+ * @param {{ env?: NodeJS.ProcessEnv }} [opts]
  */
-export function resolveSessionSecret({
-  env = process.env,
-  sessionStorePath = './sessions',
-} = {}) {
-  const sessionSecret = env.SESSION_SECRET;
+export function resolveSessionSecret({ env = process.env } = {}) {
+  const raw = env.SESSION_SECRET;
+  const sessionSecret = typeof raw === 'string' ? raw.trim() : '';
 
   if (sessionSecret) {
     return sessionSecret;
   }
 
-  const storeSecretPath = secretFileInStore(sessionStorePath);
+  console.warn(
+    'SESSION_SECRET no está definido: se ha generado un secreto efímero. '
+      + 'Las sesiones de login no sobreviven al reinicio. '
+      + 'En despliegue define SESSION_SECRET (p. ej. openssl rand -hex 32 en .env).',
+  );
 
-  if (fs.existsSync(storeSecretPath)) {
-    const existingSecret = fs.readFileSync(storeSecretPath, 'utf-8').trim();
-    if (existingSecret) {
-      return existingSecret;
-    }
-  }
-
-  if (fs.existsSync(LEGACY_SECRET_FILE)) {
-    const existingSecret = fs.readFileSync(LEGACY_SECRET_FILE, 'utf-8').trim();
-    if (existingSecret) {
-      return existingSecret;
-    }
-  }
-
-  const newSecret = crypto.randomBytes(32).toString('hex');
-
-  try {
-    fs.mkdirSync(sessionStorePath, { recursive: true });
-    fs.writeFileSync(storeSecretPath, newSecret);
-    console.log(`Generado nuevo secreto de sesión en ${storeSecretPath}`);
-  } catch (err) {
-    console.warn(
-      `⚠️ No se pudo guardar el secreto en ${storeSecretPath} (revisa permisos), pero se usará en memoria.`,
-    );
-  }
-
-  return newSecret;
+  return crypto.randomBytes(32).toString('hex');
 }

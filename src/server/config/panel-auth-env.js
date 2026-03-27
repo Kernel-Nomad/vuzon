@@ -10,15 +10,24 @@ export function getPanelAuthCredentials(env = process.env) {
 }
 
 /**
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string | null} Mensaje de error o null si la configuración es válida.
+ */
+export function getPanelAuthConfigurationIssue(env = process.env) {
+  const { authUser, authPass } = getPanelAuthCredentials(env);
+  if (!authUser || !authPass) {
+    return 'AUTH_USER y AUTH_PASS son obligatorias en .env y no pueden estar vacías (ni solo espacios). Revisa la plantilla .env.example.';
+  }
+  return null;
+}
+
+/**
  * Credenciales del panel: obligatorias y no triviales (sin cadena vacía ni solo espacios).
  * @param {NodeJS.ProcessEnv} [env]
  */
 export function assertPanelAuthConfigured(env = process.env) {
-  const { authUser, authPass } = getPanelAuthCredentials(env);
-
-  if (!authUser || !authPass) {
-    throw new Error(
-      'AUTH_USER y AUTH_PASS son obligatorias y no pueden estar vacías (ni solo espacios).',
-    );
+  const issue = getPanelAuthConfigurationIssue(env);
+  if (issue) {
+    throw new Error(issue);
   }
 }

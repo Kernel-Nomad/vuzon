@@ -1,6 +1,8 @@
 const CF_API_URL = 'https://api.cloudflare.com/client/v4';
-const DEFAULT_TIMEOUT_MS = 10_000;
-const DEFAULT_MAX_GET_RETRIES = 2;
+const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_GET_RETRIES = 2;
+const MAX_LIST_PAGES = 100;
+const MAX_LIST_ITEMS = 5000;
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 export class CloudflareApiError extends Error {
@@ -30,26 +32,8 @@ function sleep(delayMs) {
   });
 }
 
-function getPositiveNumber(rawValue, fallback) {
-  const parsed = Number(rawValue);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function getNonNegativeNumber(rawValue, fallback) {
-  const parsed = Number(rawValue);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
-}
-
 function isRetryableStatus(status) {
   return RETRYABLE_STATUSES.has(status);
-}
-
-function getRequestTimeoutMs(env) {
-  return getPositiveNumber(env.CF_API_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
-}
-
-function getMaxGetRetries(env) {
-  return getNonNegativeNumber(env.CF_API_MAX_GET_RETRIES, DEFAULT_MAX_GET_RETRIES);
 }
 
 function buildTransportError({ requestPath, method, message, cause, status, code }) {
@@ -122,8 +106,6 @@ function buildResponseError({ res, parsed, requestPath, method }) {
 }
 
 export function createCloudflareClient({ env = process.env } = {}) {
-  const requestTimeoutMs = getRequestTimeoutMs(env);
-  const maxGetRetries = getMaxGetRetries(env);
   const cfHeaders = () => ({
     'Content-Type': 'application/json',
     Authorization: `Bearer ${env.CF_API_TOKEN}`,
@@ -142,21 +124,21 @@ export function createCloudflareClient({ env = process.env } = {}) {
 
     let attempt = 0;
 
-    while (attempt <= maxGetRetries) {
+    while (attempt <= MAX_GET_RETRIES) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-      }, requestTimeoutMs);
+      }, REQUEST_TIMEOUT_MS);
 
       try {
         const res = await fetch(url, { ...options, signal: controller.signal });
         const parsed = await parseCloudflareResponse(res);
 
-        if (!res.ok || parsed.body?.success === false) {
-          throw buildResponseError({ res, parsed, requestPath, method });
-        }
-
-        if (!parsed.isJson || typeof parsed.body !== 'object' || parsed.body === null) {
+        const okHttpAndApi = res.ok && parsed.body?.success !== false;
+        const validJsonObject = parsed.isJson
+          && typeof parsed.body === 'object'
+          && parsed.body !== null;
+        if (!okHttpAndApi || !validJsonObject) {
           throw buildResponseError({ res, parsed, requestPath, method });
         }
 
@@ -184,7 +166,7 @@ export function createCloudflareClient({ env = process.env } = {}) {
 
         const canRetry = method === 'GET'
           && normalizedError.retryable
-          && attempt < maxGetRetries;
+          && attempt < MAX_GET_RETRIES;
 
         if (!canRetry) {
           throw normalizedError;
@@ -210,10 +192,32 @@ export function createCloudflareClient({ env = process.env } = {}) {
     const separator = requestPath.includes('?') ? '&' : '?';
 
     do {
+      if (page > MAX_LIST_PAGES) {
+        throw new CloudflareApiError(
+          'Se superó el límite de paginación al listar recursos en Cloudflare.',
+          {
+            status: 502,
+            code: 'list_pagination_limit',
+            retryable: false,
+          },
+        );
+      }
+
       const data = await requestCloudflare(`${requestPath}${separator}page=${page}&per_page=50`);
 
-      if (data.result) {
+      if (data.result?.length) {
         allResults = allResults.concat(data.result);
+      }
+
+      if (allResults.length > MAX_LIST_ITEMS) {
+        throw new CloudflareApiError(
+          'Se superó el límite de elementos al listar en Cloudflare.',
+          {
+            status: 502,
+            code: 'list_items_limit',
+            retryable: false,
+          },
+        );
       }
 
       if (data.result_info) {

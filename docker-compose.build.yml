@@ -1,9 +1,9 @@
-# Desarrollo: construir la imagen desde el repositorio en lugar de GHCR.
+# Development: build the image from the repository instead of GHCR.
 #
-# Fusionar con el compose base (puerto, volumen ./sessions, .env, healthcheck del Dockerfile):
+# Merge with the base compose (port mapping, optional .env):
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build -d
 #
-# Forzar reconstrucción completa (p. ej. tras cambiar dependencias en package-lock):
+# Force a full rebuild (e.g. after changing dependencies in package-lock):
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml build --no-cache
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d
 services:
@@ -11,5 +11,5 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # Nombre local de la imagen construida (no hay pull útil desde un registro público).
+    # Local name for the built image (no useful pull from a public registry).
     image: vuzon-local

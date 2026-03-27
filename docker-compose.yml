@@ -1,16 +1,22 @@
-# vuzon — necesitas un .env en este directorio (plantilla: .env.example del repo o del release).
-# Sesiones en ./sessions (volumen persistente). Documentación: README del repositorio.
+# Optional .env: use .env.example as template (cp .env.example .env). With Docker Compose v2.24+ the file can be absent;
+# the app will still exit with a clear config error until variables are set.
+#
+# Ports: VUZON_PORT in .env (optional) only changes the port on the HOST mapped to the container (default 8001).
+#        PORT below is fixed inside the container; you normally do not set PORT in .env for this stack.
+#
 # https://github.com/Kernel-Nomad/vuzon
+name: vuzon
+
 services:
   vuzon:
     container_name: vuzon
     image: ghcr.io/kernel-nomad/vuzon:latest
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
-      # Puerto dentro del contenedor (fijo). En el host usa VUZON_PORT en .env con el mapeo ports abajo.
+      # Listen port inside the container (fixed). On the host, set VUZON_PORT in .env; see ports: mapping below.
       PORT: "8001"
     restart: unless-stopped
     ports:
       - "${VUZON_PORT:-8001}:8001"
-    volumes:
-      - ./sessions:/app/sessions

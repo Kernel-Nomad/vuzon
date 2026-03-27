@@ -5,7 +5,7 @@ export async function createAlias(state, { apiRequest, clearErrors, refreshAll, 
 
   clearErrors(state);
   state.loading = true;
-  const localPart = state.normalizedLocalPart || state.newAlias.local.trim().toLowerCase();
+  const localPart = state.normalizedLocalPart;
   state.newAlias.local = localPart;
 
   try {
@@ -18,7 +18,7 @@ export async function createAlias(state, { apiRequest, clearErrors, refreshAll, 
     state.newAlias.local = '';
     await refreshAll();
   } catch (err) {
-    state.errors.alias = err.message;
+    setStatus(state, `Error: ${err.message}`);
   } finally {
     state.loading = false;
   }
@@ -57,7 +57,7 @@ export async function deleteRule(state, id, { apiRequest, refreshAll, setStatus 
     state.rules = state.rules.filter((rule) => rule.id !== id);
     setStatus(state, 'Alias eliminado');
   } catch (err) {
-    setStatus(state, err.message);
+    setStatus(state, `Error: ${err.message}`);
     await refreshAll();
   }
 }

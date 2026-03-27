@@ -1,9 +1,8 @@
-import session from 'express-session';
-import FileStoreFactory from 'session-file-store';
+import cookieSession from 'cookie-session';
 
-const FileStore = FileStoreFactory(session);
-export const SESSION_COOKIE_NAME = 'connect.sid';
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
+export const SESSION_COOKIE_NAME = 'vuzon_session';
+
+const SESSION_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
 
 export function getSessionCookieClearOptions({ isProduction } = {}) {
   return {
@@ -17,25 +16,18 @@ export function getSessionCookieClearOptions({ isProduction } = {}) {
 export function getSessionCookieOptions({ isProduction } = {}) {
   return {
     ...getSessionCookieClearOptions({ isProduction }),
-    maxAge: 1000 * 60 * 60 * 24 * 7,
+    maxAge: SESSION_MAX_AGE_MS,
   };
 }
 
 export function createSessionMiddleware({
   sessionSecret,
   isProduction,
-  storePath = './sessions',
 } = {}) {
-  return session({
+  const cookieOpts = getSessionCookieOptions({ isProduction });
+  return cookieSession({
     name: SESSION_COOKIE_NAME,
-    store: new FileStore({
-      path: storePath,
-      ttl: SESSION_TTL_SECONDS,
-      retries: 0,
-    }),
-    secret: sessionSecret,
-    resave: false,
-    saveUninitialized: false,
-    cookie: getSessionCookieOptions({ isProduction }),
+    keys: [sessionSecret],
+    ...cookieOpts,
   });
 }

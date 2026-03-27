@@ -1,6 +1,28 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assertCloudflareEnvConfigured } from '../../src/server/config/cloudflare-env.js';
+import {
+  assertCfApiTokenConfigured,
+  assertCloudflareEnvConfigured,
+  getCfApiToken,
+  getCloudflareIdsConfigurationIssueIfFullySpecified,
+} from '../../src/server/config/cloudflare-env.js';
+
+test('getCfApiToken: trim de espacios', () => {
+  assert.equal(getCfApiToken({ CF_API_TOKEN: '  abc  ' }), 'abc');
+});
+
+test('assertCfApiTokenConfigured: rechaza vacío', () => {
+  assert.throws(
+    () => assertCfApiTokenConfigured({ CF_API_TOKEN: '' }),
+    /CF_API_TOKEN/,
+  );
+});
+
+test('assertCfApiTokenConfigured: normaliza env.CF_API_TOKEN', () => {
+  const env = { CF_API_TOKEN: '  tok  ' };
+  assertCfApiTokenConfigured(env);
+  assert.equal(env.CF_API_TOKEN, 'tok');
+});
 
 test('assertCloudflareEnvConfigured: acepta IDs válidos', () => {
   assertCloudflareEnvConfigured({
@@ -27,4 +49,21 @@ test('assertCloudflareEnvConfigured: rechaza account con caracteres inválidos',
     }),
     /CF_ACCOUNT_ID/,
   );
+});
+
+test('getCloudflareIdsConfigurationIssueIfFullySpecified: null si falta algún ID', () => {
+  assert.equal(
+    getCloudflareIdsConfigurationIssueIfFullySpecified({
+      CF_ZONE_ID: 'zone_test_1',
+    }),
+    null,
+  );
+});
+
+test('getCloudflareIdsConfigurationIssueIfFullySpecified: detecta ID inválido cuando ambos están', () => {
+  const issue = getCloudflareIdsConfigurationIssueIfFullySpecified({
+    CF_ZONE_ID: 'bad zone',
+    CF_ACCOUNT_ID: 'acct_test_1',
+  });
+  assert.match(issue, /CF_ZONE_ID/);
 });
