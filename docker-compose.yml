@@ -1,7 +1,7 @@
 services:
   vuzon:
     container_name: vuzon
-    image: ghcr.io/kernel-nomad/vuzon
+    image: ghcr.io/kn990x/vuzon
     env_file:
       - .env
     environment:

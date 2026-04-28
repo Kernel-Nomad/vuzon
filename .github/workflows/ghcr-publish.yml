@@ -51,7 +51,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/Kernel-Nomad/vuzon
+          images: ghcr.io/kn990x/vuzon
           tags: |
             type=raw,value=latest
             type=semver,pattern={{version}},value=${{ github.event.release.tag_name }}

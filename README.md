@@ -11,19 +11,19 @@
 </div>
 
 <p align="center">
-  <a href="https://github.com/Kernel-Nomad/vuzon/stargazers">
-    <img src="https://img.shields.io/github/stars/Kernel-Nomad/vuzon?style=social" alt="GitHub stars"/>
+  <a href="https://github.com/KN990x/vuzon/stargazers">
+    <img src="https://img.shields.io/github/stars/KN990x/vuzon?style=social" alt="GitHub stars"/>
   </a>
   &nbsp;
-  <a href="https://github.com/Kernel-Nomad/vuzon/issues">
-    <img src="https://img.shields.io/github/issues/Kernel-Nomad/vuzon" alt="GitHub issues"/>
+  <a href="https://github.com/KN990x/vuzon/issues">
+    <img src="https://img.shields.io/github/issues/KN990x/vuzon" alt="GitHub issues"/>
   </a>
   &nbsp;
   <a href="./LICENSE">
-    <img src="https://img.shields.io/github/license/Kernel-Nomad/vuzon" alt="License"/>
+    <img src="https://img.shields.io/github/license/KN990x/vuzon" alt="License"/>
   </a>
   &nbsp;
-  <img src="https://img.shields.io/github/last-commit/Kernel-Nomad/vuzon" alt="Last commit"/>
+  <img src="https://img.shields.io/github/last-commit/KN990x/vuzon" alt="Last commit"/>
 </p>
 
 <p align="center">
@@ -54,17 +54,17 @@
 
 ### Docker Compose
 
-**Quick install** (files from the [`main`](https://github.com/Kernel-Nomad/vuzon/tree/main) branch):
+**Quick install** (files from the [`main`](https://github.com/KN990x/vuzon/tree/main) branch):
 
 ```bash
 mkdir vuzon && cd vuzon
-curl -fsSL -O https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/docker-compose.yml \
-  -O https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/.env.example
+curl -fsSL -O https://raw.githubusercontent.com/KN990x/vuzon/main/docker-compose.yml \
+  -O https://raw.githubusercontent.com/KN990x/vuzon/main/.env.example
 cp .env.example .env
 docker compose pull && docker compose up -d
 ```
 
-**Manual:** put [`docker-compose.yml`](docker-compose.yml) and [`.env.example`](.env.example) in the same directory (from the repo, e.g. [raw `docker-compose.yml`](https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/docker-compose.yml) and [raw `.env.example`](https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/.env.example)), run **`cp .env.example .env`**, edit **`.env`**, then **`docker compose pull && docker compose up -d`**.
+**Manual:** put [`docker-compose.yml`](docker-compose.yml) and [`.env.example`](.env.example) in the same directory (from the repo, e.g. [raw `docker-compose.yml`](https://raw.githubusercontent.com/KN990x/vuzon/main/docker-compose.yml) and [raw `.env.example`](https://raw.githubusercontent.com/KN990x/vuzon/main/.env.example)), run **`cp .env.example .env`**, edit **`.env`**, then **`docker compose pull && docker compose up -d`**.
 
 Open **http://localhost:8001** (or `http://<server-ip>:<port>` on your LAN). Another host port: **`VUZON_PORT`** in `.env`.
 
@@ -160,17 +160,17 @@ Clone the repo, run tests, and build without Docker: **[CONTRIBUTING.md](CONTRIB
 
 ### Docker Compose
 
-**Instalación rápida** (archivos desde la rama [`main`](https://github.com/Kernel-Nomad/vuzon/tree/main)):
+**Instalación rápida** (archivos desde la rama [`main`](https://github.com/KN990x/vuzon/tree/main)):
 
 ```bash
 mkdir vuzon && cd vuzon
-curl -fsSL -O https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/docker-compose.yml \
-  -O https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/.env.example
+curl -fsSL -O https://raw.githubusercontent.com/KN990x/vuzon/main/docker-compose.yml \
+  -O https://raw.githubusercontent.com/KN990x/vuzon/main/.env.example
 cp .env.example .env
 docker compose pull && docker compose up -d
 ```
 
-**Manual:** coloca [`docker-compose.yml`](docker-compose.yml) y [`.env.example`](.env.example) en el mismo directorio (desde el repo, p. ej. [`docker-compose.yml` en raw](https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/docker-compose.yml) y [`.env.example` en raw](https://raw.githubusercontent.com/Kernel-Nomad/vuzon/main/.env.example)), ejecuta **`cp .env.example .env`**, edita **`.env`**, y luego **`docker compose pull && docker compose up -d`**.
+**Manual:** coloca [`docker-compose.yml`](docker-compose.yml) y [`.env.example`](.env.example) en el mismo directorio (desde el repo, p. ej. [`docker-compose.yml` en raw](https://raw.githubusercontent.com/KN990x/vuzon/main/docker-compose.yml) y [`.env.example` en raw](https://raw.githubusercontent.com/KN990x/vuzon/main/.env.example)), ejecuta **`cp .env.example .env`**, edita **`.env`**, y luego **`docker compose pull && docker compose up -d`**.
 
 Abre **http://localhost:8001** (o `http://<server-ip>:<port>` en tu LAN). Otro puerto del anfitrión: **`VUZON_PORT`** en `.env`.
 
